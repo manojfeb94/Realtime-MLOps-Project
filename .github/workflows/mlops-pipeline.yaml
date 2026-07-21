@@ -41,32 +41,32 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
     
-    - name: Generate dataset
-      run: python generate_data.py
-    
-    - name: Train model
+    - name: Generate dataset and Train model
       run: |
-        python train.py
+            python generate_data.py
+            python train.py
+    
+    - name: Track CSV dataset and PKL model with DVC
+      run: |
+        dvc add data/churn_data.csv
         dvc add models/churn_model.pkl
     
 
     
-    - name: Push model to GCS directly
+    - name: Push dataset and model to GCS via DVC
       run: |
         dvc remote add -d gcs-remote gs://${{ env.GCS_BUCKET }}/dvc-store --force
         dvc push
-        # gcloud storage cp models/churn_model.pkl gs://churn-model-bucket-manoj/models/churn_model.pkl
-        echo "Model pushed to GCS is success#"
     
     - name: Update inference.yaml with GCS model path
       run: |
         MODEL_URI="gs://churn-model-bucket-manoj/models/churn_model.pkl"
         sed -i "s|storageUri: .*|storageUri: $MODEL_URI|g" k8s/inference.yaml
     
-    - name: Commit updated .dvc and inference.yaml
+    - name: Commit updated .dvc pointer files and inference.yaml to Git
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add models/churn_model.pkl.dvc models/.gitignore k8s/inference.yaml
+        git add *.dvc **/*.dvc k8s/inference.yaml .gitignore
         git commit -m "Update model GCS path [skip ci]" || echo "No changes"
         git push || echo "No changes to push"
