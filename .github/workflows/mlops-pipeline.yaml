@@ -39,7 +39,7 @@ jobs:
       id: auth
       uses: google-github-actions/auth@v2
       with:
-        workload_identity_provider: 'projects/165993017700/locations/global/workloadIdentityPools/github-pool/providers/github-provider' # 👈 Replace with your string
+        workload_identity_provider: 'projects/165993017700/locations/global/workloadIdentityPools/github-mlops-pool/providers/github-provider' # 👈 Replace with your string
         service_account: 'github-actions-sa@project-722e0926-2abc-479e-97f.iam.gserviceaccount.com' # 👈 Replace with your SA email
 
     # Setting up the gcloud CLI tool automatically uses the credentials generated above
