@@ -48,7 +48,7 @@ jobs:
     - name: Push model to GCS directly
       run: |
         gsutil cp models/churn_model.pkl gs://churn-model-bucket-manoj/models/churn_model.pkl
-        echo "Model pushed to GCS is success"
+        echo "Model pushed to GCS is success#"
     
     - name: Update inference.yaml with GCS model path
       run: |
