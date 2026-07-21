@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Required to push commits
+      id-token: write
     
     steps:
     - name: Checkout code
