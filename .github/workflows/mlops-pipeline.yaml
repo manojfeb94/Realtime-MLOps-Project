@@ -57,6 +57,7 @@ jobs:
       run: |
         dvc remote add -d gcs-remote gs://${{ env.GCS_BUCKET }}/dvc-store --force
         dvc push
+        gcloud storage cp models/churn_model.pkl gs://${{ env.GCS_BUCKET }}/models/churn_model.pkl
     
     - name: Update inference.yaml with GCS model path
       run: |
