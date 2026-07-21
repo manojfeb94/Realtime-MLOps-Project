@@ -5,6 +5,6 @@ metadata:
   namespace: churn-model
 spec:
   predictor:
-    serviceAccountName: sa-s3-access
+    serviceAccountName: sa-gcs-access
     sklearn:
       storageUri: gs://churn-model-bucket-manoj/models/churn_model.pkl
