@@ -2,12 +2,12 @@ name: MLOps Pipeline
 
 on:
   push:
-    branches: [cicd]
+    branches: ["*"]
   workflow_dispatch:
 
 env:
-  AWS_REGION: us-east-1
-  S3_BUCKET: churn-model-bucket-cicd-abhi
+  GCP_REGION: asia-south1
+  GCS_BUCKET: churn-model-bucket-manoj
 
 jobs:
   train-and-deploy:
@@ -17,14 +17,12 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}  # Use built-in token
+      uses: actions/checkout@v4
     
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install dependencies
       run: |
@@ -36,21 +34,25 @@ jobs:
     - name: Train model
       run: python train.py
     
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v2
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        workload_identity_provider: 'projects/165993017700/locations/global/workloadIdentityPools/github-pool/providers/github-provider' # 👈 Replace with your string
+        service_account: 'github-actions-sa@project-722e0926-2abc-479e-97f.iam.gserviceaccount.com' # 👈 Replace with your SA email
+
+    # Setting up the gcloud CLI tool automatically uses the credentials generated above
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
     
-    - name: Push model to S3 directly
+    - name: Push model to GCS directly
       run: |
-        aws s3 cp models/churn_model.pkl s3://churn-model-bucket-cicd-abhi/models/churn_model.pkl
-        echo "Model pushed to S3 is success"
+        gsutil cp models/churn_model.pkl gs://churn-model-bucket-manoj/models/churn_model.pkl
+        echo "Model pushed to GCS is success"
     
-    - name: Update inference.yaml with S3 model path
+    - name: Update inference.yaml with GCS model path
       run: |
-        MODEL_URI="s3://churn-model-bucket-cicd-abhi/models/churn_model.pkl"
+        MODEL_URI="gs://churn-model-bucket-manoj/models/churn_model.pkl"
         sed -i "s|storageUri: .*|storageUri: $MODEL_URI|g" k8s/inference.yaml
     
     - name: Commit updated inference.yaml
@@ -58,5 +60,5 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add k8s/inference.yaml
-        git commit -m "Update model S3 path [skip ci]" || echo "No changes"
+        git commit -m "Update model GCS path [skip ci]" || echo "No changes"
         git push || echo "No changes to push"
