@@ -28,13 +28,8 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
-    
-    - name: Generate dataset
-      run: python generate_data.py
-    
-    - name: Train model
-      run: python train.py
-    
+        pip install "dvc[gs]"  # Installs DVC with Google Cloud Storage support
+
     - name: Authenticate to Google Cloud
       id: auth
       uses: google-github-actions/auth@v2
@@ -46,9 +41,21 @@ jobs:
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2
     
+    - name: Generate dataset
+      run: python generate_data.py
+    
+    - name: Train model
+      run: |
+        python train.py
+        dvc add models/churn_model.pkl
+    
+
+    
     - name: Push model to GCS directly
       run: |
-        gcloud storage cp models/churn_model.pkl gs://churn-model-bucket-manoj/models/churn_model.pkl
+        dvc remote add -d gcs-remote gs://${{ env.GCS_BUCKET }}/dvc-store --force
+        dvc push
+        # gcloud storage cp models/churn_model.pkl gs://churn-model-bucket-manoj/models/churn_model.pkl
         echo "Model pushed to GCS is success#"
     
     - name: Update inference.yaml with GCS model path
@@ -56,10 +63,10 @@ jobs:
         MODEL_URI="gs://churn-model-bucket-manoj/models/churn_model.pkl"
         sed -i "s|storageUri: .*|storageUri: $MODEL_URI|g" k8s/inference.yaml
     
-    - name: Commit updated inference.yaml
+    - name: Commit updated .dvc and inference.yaml
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
-        git add k8s/inference.yaml
+        git add models/churn_model.pkl.dvc models/.gitignore k8s/inference.yaml
         git commit -m "Update model GCS path [skip ci]" || echo "No changes"
         git push || echo "No changes to push"
