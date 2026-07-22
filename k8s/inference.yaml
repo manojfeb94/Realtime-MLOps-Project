@@ -10,7 +10,7 @@ spec:
       storageUri: gs://churn-model-bucket-manoj/models/churn_model.pkl
       resources:
         requests:
-          cpu: "100m"      # Reduced from 1 CPU (1000m) to 0.1 CPU
+          cpu: "10m"      # Reduced from 1 CPU (1000m) to 0.1 CPU
           memory: "256Mi"  # Reduced from 2Gi to 256MB
         limits:
           cpu: "500m"
